@@ -83,7 +83,7 @@ body.exporting .photo.boss:not(.has){visibility:hidden}
  <label class="rng" id="bgCtl" style="display:none">ความเข้มฟิล์มขาว <input type="range" id="bgOp" min="0" max="95" value="75"></label>
  <span id="msg" style="font-size:13px;color:#667"></span>
 </div>
-<div class="hint">คลิกที่ข้อความใดก็ได้เพื่อแก้ไข · คลิกที่กรอบรูปเพื่ออัพโหลดภาพ · ถ้าจะเก็บเป็นรูป ให้แคปหน้าจอส่วนใบตาราง</div>
+<div class="hint">คลิกที่ข้อความใดก็ได้เพื่อแก้ไข · คลิกที่กรอบรูปเพื่ออัพโหลดภาพ · เมื่อเสร็จแล้วกดปุ่มดาวน์โหลดรูป (รูปที่ได้จะเป็นขนาดเดียวกันทุกอุปกรณ์)</div>
 
 <div class="poster" id="poster">
  <div class="bg" id="bg"></div><div class="ov2" id="bgov"></div>
@@ -186,7 +186,7 @@ dl.onclick=async()=>{
  document.body.classList.add('exporting');
  try{
   if(document.fonts&&document.fonts.ready)await document.fonts.ready;
-  const cv=await html2canvas(document.getElementById('poster'),{scale:2,backgroundColor:'#ffffff',useCORS:true});
+  const cv=await html2canvas(document.getElementById('poster'),{scale:2,backgroundColor:'#ffffff',useCORS:true,windowWidth:1000,onclone:d=>{const q=d.getElementById('poster');q.style.width='760px';q.style.maxWidth='760px'}});
   const blob=await new Promise(r=>cv.toBlob(r,'image/png'));
   const name='team-schedule-'+dIn.value+'.png';
   let dls=null;try{dls=await claude.use('downloads')}catch(e){}

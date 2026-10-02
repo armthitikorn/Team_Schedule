@@ -81,9 +81,13 @@ body.exporting .photo.boss:not(.has){visibility:hidden}
  <button class="alt" id="bgBtn">🖼 ภาพพื้นหลัง</button>
  <button class="alt" id="bgClr" style="display:none">ลบพื้นหลัง</button>
  <label class="rng" id="bgCtl" style="display:none">ความเข้มฟิล์มขาว <input type="range" id="bgOp" min="0" max="95" value="75"></label>
+ <span class="sep"></span>
+ <button class="alt" id="expBtn">💾 สำรองค่าตั้ง (ไฟล์)</button>
+ <button class="alt" id="impBtn">📂 โหลดไฟล์ค่าตั้ง</button>
+ <button class="alt" id="resetBtn">↺ ล้างค่าที่จำไว้</button>
  <span id="msg" style="font-size:13px;color:#667"></span>
 </div>
-<div class="hint">คลิกที่ข้อความใดก็ได้เพื่อแก้ไข · คลิกที่กรอบรูปเพื่ออัพโหลดภาพ · เมื่อเสร็จแล้วกดปุ่มดาวน์โหลดรูป (รูปที่ได้จะเป็นขนาดเดียวกันทุกอุปกรณ์)</div>
+<div class="hint">ระบบจำรูป พื้นหลัง และข้อมูลทุกอย่างไว้ในเครื่องนี้อัตโนมัติ วันถัดไปแก้เฉพาะวันที่/หัวข้อ · คลิกที่ข้อความใดก็ได้เพื่อแก้ไข · คลิกที่กรอบรูปเพื่ออัพโหลดภาพ · เมื่อเสร็จแล้วกดปุ่มดาวน์โหลดรูป (รูปที่ได้จะเป็นขนาดเดียวกันทุกอุปกรณ์)</div>
 
 <div class="poster" id="poster">
  <div class="bg" id="bg"></div><div class="ov2" id="bgov"></div>
@@ -100,107 +104,166 @@ body.exporting .photo.boss:not(.has){visibility:hidden}
  <div class="rows" id="rows"></div>
  <div class="foot">
   <div class="tag"><span contenteditable>TOGETHER WE MAKE A</span><br><b contenteditable>DIFFERENCE</b></div>
-  <div class="acad" contenteditable>PRU Academy<br><small>FOR A BRIGHTER TOMORROW</small></div>
+  <div class="acad"><span contenteditable>PRU Academy</span><br><small contenteditable>FOR A BRIGHTER TOMORROW</small></div>
  </div>
 </div>
 
 <div id="ov"><p>กดค้างที่รูปเพื่อบันทึก</p><img id="ovImg" alt=""><button onclick="document.getElementById('ov').style.display='none'">ปิด</button></div>
 <input type="file" id="file" accept="image/*" hidden>
+<input type="file" id="impFile" accept=".json,application/json" hidden>
 <input type="file" id="bgFile" accept="image/*" hidden>
 <input type="file" id="multiFile" accept="image/*" multiple hidden>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script>
 const CATS={train:['📊','Training & Presentation'],content:['📝','Content Development'],program:['⚙️','Program Development'],meet:['👥','Meeting'],other:['⭐','Other']};
+const KEY='teamSchedule.v1';
 const init=[
  {name:'Ratthanin (Meth)',handle:'@Siripinyo',time:'09.00 - 17.00',topic:'ความรู้และทักษะการนำเสนอขายแบบประกัน PRU Healthy Plus',cat:'train'},
  {name:'Nawarat (Kae)',handle:'',time:'',topic:'Prepare content Retention Course - DMTM',cat:'content'},
  {name:'Thitikorn.k (Arm)',handle:'',time:'',topic:'Update And Refresh Program for New TSRs Onboarding',cat:'program'},
  {name:'Thaweep (Ao)',handle:'@SYM',time:'09.00 - 17.00',topic:'ความรู้และทักษะการนำเสนอขายแบบประกัน PRU Healthy Plus',cat:'train'}
 ];
-const rows=document.getElementById('rows');let target=null;
+const $=id=>document.getElementById(id);
+const rows=$('rows'),poster=$('poster'),bg=$('bg'),bgov=$('bgov'),msg=$('msg'),dIn=$('dateIn');
+let target=null,timer=null;
+function sched(){clearTimeout(timer);timer=setTimeout(saveState,500)}
+function setPhoto(el,url){
+ if(url){el.style.backgroundImage='url('+url+')';el.dataset.src=url;el.textContent='';el.classList.add('has')}
+}
+function shrink(file,max){return new Promise((res,rej)=>{
+ const u=URL.createObjectURL(file),im=new Image();
+ im.onload=()=>{const k=Math.min(1,max/Math.max(im.width,im.height));const c=document.createElement('canvas');c.width=Math.round(im.width*k);c.height=Math.round(im.height*k);
+  const x=c.getContext('2d');x.fillStyle='#fff';x.fillRect(0,0,c.width,c.height);x.drawImage(im,0,0,c.width,c.height);URL.revokeObjectURL(u);res(c.toDataURL('image/jpeg',.88))};
+ im.onerror=()=>{URL.revokeObjectURL(u);rej(new Error('img'))};im.src=u})}
 function addRow(d){
  d=d||{name:'ชื่อ (ชื่อเล่น)',handle:'@ทีม',time:'09.00 - 17.00',topic:'หัวข้องาน',cat:'train'};
+ if(!CATS[d.cat])d.cat='other';
  const r=document.createElement('div');r.className='row';
  const opts=Object.entries(CATS).map(([k,v])=>`<option value="${k}"${k===d.cat?' selected':''}>${v[1]}</option>`).join('');
  r.innerHTML=`<div class="photo">คลิกเพื่ออัพโหลดรูป</div>
- <div class="mid"><div class="who"><span contenteditable>${d.name}</span><small contenteditable>${d.handle}</small></div>
- <div class="task"><span class="time" contenteditable>${d.time}</span><div class="topic" contenteditable>${d.topic}</div></div></div>
+ <div class="mid"><div class="who"><span contenteditable></span><small contenteditable></small></div>
+ <div class="task"><span class="time" contenteditable></span><div class="topic" contenteditable></div></div></div>
  <div class="cat"><div class="ic"></div><div class="cl"></div><select style="margin-top:6px;font-size:11px;max-width:100%">${opts}</select></div>
  <button class="del" title="ลบแถว">×</button>`;
+ r.querySelector('.who span').textContent=d.name||'';
+ r.querySelector('.who small').textContent=d.handle||'';
+ const timeEl=r.querySelector('.time');timeEl.textContent=d.time||'';
+ r.querySelector('.topic').textContent=d.topic||'';
  const sel=r.querySelector('select');
  const upd=()=>{r.querySelector('.ic').textContent=CATS[sel.value][0];r.querySelector('.cl').textContent=CATS[sel.value][1]};
  sel.onchange=upd;upd();
- const timeEl=r.querySelector('.time');
  timeEl.addEventListener('blur',()=>{timeEl.style.display=timeEl.textContent.trim()?'inline-block':'none'});
  if(!d.time)timeEl.style.display='none';
- r.querySelector('.photo').onclick=()=>{target=r.querySelector('.photo');document.getElementById('file').click()};
- r.querySelector('.del').onclick=()=>r.remove();
+ const ph=r.querySelector('.photo');setPhoto(ph,d.photo);
+ ph.onclick=()=>{target=ph;$('file').click()};
+ r.querySelector('.del').onclick=()=>{r.remove();sched()};
  rows.appendChild(r);
 }
-document.getElementById('file').onchange=e=>{
- const f=e.target.files[0];if(!f||!target)return;
- const rd=new FileReader();rd.onload=()=>{target.style.backgroundImage=`url(${rd.result})`;target.textContent='';target.classList.add('has')};
- rd.readAsDataURL(f);e.target.value='';
+$('file').onchange=async e=>{
+ const f=e.target.files[0];e.target.value='';if(!f||!target)return;
+ try{setPhoto(target,await shrink(f,target.id==='boss'?700:500));sched()}catch(x){msg.textContent='อ่านรูปไม่ได้'}
 };
-document.getElementById('addBtn').onclick=()=>addRow();
-init.forEach(addRow);
-const dIn=document.getElementById('dateIn');
+$('addBtn').onclick=()=>{addRow();sched()};
 function setDate(v){
  const d=new Date(v+'T00:00:00');if(isNaN(d))return;
- document.getElementById('dow').textContent=d.toLocaleDateString('en-US',{weekday:'short'}).toUpperCase();
- document.getElementById('day').textContent=String(d.getDate()).padStart(2,'0');
- document.getElementById('my').textContent=d.toLocaleDateString('en-US',{month:'short'}).toUpperCase()+' '+d.getFullYear();
+ $('dow').textContent=d.toLocaleDateString('en-US',{weekday:'short'}).toUpperCase();
+ $('day').textContent=String(d.getDate()).padStart(2,'0');
+ $('my').textContent=d.toLocaleDateString('en-US',{month:'short'}).toUpperCase()+' '+d.getFullYear();
 }
-dIn.value='2026-10-02';dIn.onchange=()=>setDate(dIn.value);
-
-document.getElementById('boss').onclick=()=>{target=document.getElementById('boss');document.getElementById('file').click()};
-const readURL=f=>new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result);r.onerror=rej;r.readAsDataURL(f)});
-const poster=document.getElementById('poster'),bg=document.getElementById('bg'),bgov=document.getElementById('bgov');
-document.getElementById('bgBtn').onclick=()=>document.getElementById('bgFile').click();
-document.getElementById('bgFile').onchange=async e=>{
- const f=e.target.files[0];if(!f)return;
- bg.style.backgroundImage='url('+await readURL(f)+')';
- poster.classList.add('has-bg');
- document.getElementById('bgClr').style.display='';document.getElementById('bgCtl').style.display='flex';
- e.target.value='';
+dIn.value='2026-10-02';dIn.onchange=()=>{setDate(dIn.value);sched()};
+$('boss').onclick=()=>{target=$('boss');$('file').click()};
+function setBg(url){
+ if(url){bg.style.backgroundImage='url('+url+')';bg.dataset.src=url;poster.classList.add('has-bg');$('bgClr').style.display='';$('bgCtl').style.display='flex'}
+ else{bg.style.backgroundImage='';delete bg.dataset.src;poster.classList.remove('has-bg');$('bgClr').style.display='none';$('bgCtl').style.display='none'}
+}
+$('bgBtn').onclick=()=>$('bgFile').click();
+$('bgFile').onchange=async e=>{
+ const f=e.target.files[0];e.target.value='';if(!f)return;
+ try{setBg(await shrink(f,1400));sched()}catch(x){msg.textContent='อ่านรูปไม่ได้'}
 };
-document.getElementById('bgClr').onclick=()=>{
- bg.style.backgroundImage='';poster.classList.remove('has-bg');
- document.getElementById('bgClr').style.display='none';document.getElementById('bgCtl').style.display='none';
-};
-document.getElementById('bgOp').oninput=e=>{bgov.style.opacity=e.target.value/100};
-document.getElementById('multiBtn').onclick=()=>document.getElementById('multiFile').click();
-document.getElementById('multiFile').onchange=async e=>{
- const files=[...e.target.files];if(!files.length)return;
- const m=document.getElementById('msg');
- let slots=[...document.querySelectorAll('.photo:not(.has)')];
- if(!slots.length)slots=[...document.querySelectorAll('.photo')];
+$('bgClr').onclick=()=>{setBg(null);sched()};
+$('bgOp').oninput=e=>{bgov.style.opacity=e.target.value/100};
+$('multiBtn').onclick=()=>$('multiFile').click();
+$('multiFile').onchange=async e=>{
+ const files=[...e.target.files];e.target.value='';if(!files.length)return;
+ let slots=[...document.querySelectorAll('.row .photo:not(.has)')];
+ if(!slots.length)slots=[...document.querySelectorAll('.row .photo')];
  const n=Math.min(files.length,slots.length);
- for(let i=0;i<n;i++){const u=await readURL(files[i]);slots[i].style.backgroundImage='url('+u+')';slots[i].textContent='';slots[i].classList.add('has')}
- m.textContent='ใส่รูป '+n+' รูปตามลำดับแถว'+(files.length>n?' (เหลือ '+(files.length-n)+' รูปที่ไม่มีแถวรองรับ)':'');
- e.target.value='';
+ for(let i=0;i<n;i++){try{setPhoto(slots[i],await shrink(files[i],500))}catch(x){}}
+ msg.textContent='ใส่รูป '+n+' รูปตามลำดับแถว'+(files.length>n?' (เหลือ '+(files.length-n)+' รูปที่ไม่มีแถวรองรับ)':'');
+ sched();
 };
-const dl=document.getElementById('dlBtn'),msg=document.getElementById('msg');
+/* ---------- จำค่า ---------- */
+const headTexts=()=>[...poster.querySelectorAll('[contenteditable]')].filter(el=>!el.closest('.row'));
+function getState(){
+ return {v:1,date:dIn.value,boss:$('boss').dataset.src||'',bg:bg.dataset.src||'',bgOp:$('bgOp').value,
+  texts:headTexts().map(el=>el.textContent),
+  rows:[...rows.children].map(r=>({name:r.querySelector('.who span').textContent,handle:r.querySelector('.who small').textContent,
+   time:r.querySelector('.time').textContent,topic:r.querySelector('.topic').textContent,cat:r.querySelector('select').value,photo:r.querySelector('.photo').dataset.src||''}))};
+}
+function saveState(){
+ try{localStorage.setItem(KEY,JSON.stringify(getState()))}
+ catch(e){msg.textContent='จำค่าอัตโนมัติไม่ได้ (พื้นที่เต็ม) ใช้ปุ่มสำรองค่าตั้งแทน'}
+}
+function str(x,n){return typeof x==='string'?x.slice(0,n):''}
+function img(x){return typeof x==='string'&&x.startsWith('data:image/')?x:''}
+function loadState(o){
+ if(!o||!Array.isArray(o.rows))return false;
+ rows.innerHTML='';
+ o.rows.slice(0,12).forEach(r=>addRow({name:str(r.name,200),handle:str(r.handle,200),time:str(r.time,100),topic:str(r.topic,500),cat:str(r.cat,20),photo:img(r.photo)}));
+ setPhoto($('boss'),img(o.boss));
+ setBg(img(o.bg));
+ if(o.bgOp!==undefined){const v=Math.max(0,Math.min(95,Number(o.bgOp)||75));$('bgOp').value=v;bgov.style.opacity=v/100}
+ const hs=headTexts();
+ if(Array.isArray(o.texts)&&o.texts.length===hs.length)hs.forEach((el,i)=>{el.textContent=str(o.texts[i],300)});
+ if(typeof o.date==='string'&&/^\d{4}-\d{2}-\d{2}$/.test(o.date)){dIn.value=o.date;setDate(o.date)}
+ return true;
+}
+document.addEventListener('input',sched);
+document.addEventListener('change',sched);
+/* ---------- บันทึกไฟล์ ---------- */
+async function saveFile(blob,name){
+ let dls=null;try{dls=await claude.use('downloads')}catch(e){}
+ if(dls){
+  try{await dls.save({filename:name,data:blob});return 'บันทึกแล้ว'}
+  catch(e){return e&&e.code==='declined'?'ยกเลิกการบันทึก':'บันทึกไม่สำเร็จ'}
+ }
+ const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;
+ document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),4000);
+ return 'ดาวน์โหลดแล้ว';
+}
+$('expBtn').onclick=async()=>{msg.textContent=await saveFile(new Blob([JSON.stringify(getState())],{type:'application/json'}),'team-schedule-settings.json')};
+$('impBtn').onclick=()=>$('impFile').click();
+$('impFile').onchange=async e=>{
+ const f=e.target.files[0];e.target.value='';if(!f)return;
+ try{const o=JSON.parse(await f.text());if(loadState(o)){saveState();msg.textContent='โหลดค่าตั้งแล้ว'}else msg.textContent='ไฟล์ไม่ถูกต้อง'}
+ catch(x){msg.textContent='ไฟล์ไม่ถูกต้อง'}
+};
+let armed=false;
+$('resetBtn').onclick=()=>{
+ const b=$('resetBtn');
+ if(!armed){armed=true;b.textContent='กดอีกครั้งเพื่อยืนยันล้างทั้งหมด';setTimeout(()=>{armed=false;b.textContent='↺ ล้างค่าที่จำไว้'},4000);return}
+ try{localStorage.removeItem(KEY)}catch(e){}
+ armed=false;b.textContent='↺ ล้างค่าที่จำไว้';
+ rows.innerHTML='';init.forEach(addRow);$('boss').style.backgroundImage='';$('boss').classList.remove('has');delete $('boss').dataset.src;$('boss').textContent='คลิกเพื่ออัพโหลดรูปหัวหน้า';
+ setBg(null);msg.textContent='ล้างแล้ว (ข้อความหัวตารางกลับค่าเดิมเมื่อรีเฟรชหน้า)';
+};
+/* ---------- ดาวน์โหลดรูป ---------- */
+const dl=$('dlBtn');
 dl.onclick=async()=>{
  msg.textContent='กำลังสร้างรูป...';dl.disabled=true;
  document.body.classList.add('exporting');
  try{
   if(document.fonts&&document.fonts.ready)await document.fonts.ready;
-  const cv=await html2canvas(document.getElementById('poster'),{scale:2,backgroundColor:'#ffffff',useCORS:true,windowWidth:1000,onclone:d=>{const q=d.getElementById('poster');q.style.width='760px';q.style.maxWidth='760px'}});
+  const cv=await html2canvas(poster,{scale:2,backgroundColor:'#ffffff',useCORS:true,windowWidth:1000,onclone:d=>{const q=d.getElementById('poster');q.style.width='760px';q.style.maxWidth='760px'}});
   const blob=await new Promise(r=>cv.toBlob(r,'image/png'));
-  const name='team-schedule-'+dIn.value+'.png';
-  let dls=null;try{dls=await claude.use('downloads')}catch(e){}
-  if(dls){
-   try{await dls.save({filename:name,data:blob});msg.textContent='บันทึกแล้ว';}
-   catch(e){msg.textContent=e&&e.code==='declined'?'ยกเลิกการบันทึก':'บันทึกไม่สำเร็จ';}
-  }else{
-   const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;
-   document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),4000);
-   msg.textContent='ดาวน์โหลดแล้ว';
-  }
- }catch(e){msg.textContent='สร้างรูปไม่สำเร็จ ลองแคปหน้าจอแทน';}
+  msg.textContent=await saveFile(blob,'team-schedule-'+dIn.value+'.png');
+ }catch(e){msg.textContent='สร้างรูปไม่สำเร็จ ลองแคปหน้าจอแทน'}
  document.body.classList.remove('exporting');dl.disabled=false;
 };
+/* ---------- เริ่มต้น ---------- */
+init.forEach(addRow);
+try{const sv=localStorage.getItem(KEY);if(sv&&loadState(JSON.parse(sv)))msg.textContent='โหลดค่าที่จำไว้แล้ว'}catch(e){}
 </script>
 </body>
 </html>

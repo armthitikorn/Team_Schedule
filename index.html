@@ -66,6 +66,8 @@ body.exporting [contenteditable]:hover{background:none}
 .poster.has-bg:before{display:none}
 .bar .sep{width:100%;height:0}
 .bar label.rng{display:flex;gap:6px;align-items:center;font-size:13px}
+.photo.boss{flex:1;min-width:140px;max-width:280px;width:auto;height:160px;background-position:center top;font-size:13px}
+body.exporting .photo.boss:not(.has){visibility:hidden}
 </style>
 </head>
 <body>
@@ -91,6 +93,7 @@ body.exporting [contenteditable]:hover{background:none}
    <div class="title"><span class="t1" contenteditable>TEAM</span><span class="t2" contenteditable>SCHEDULE</span></div>
    <div class="team" contenteditable>Distribution Academy Team</div>
   </div>
+  <div class="photo boss" id="boss" title="รูปหัวหน้า">คลิกเพื่ออัพโหลดรูปหัวหน้า</div>
   <div class="cal"><div class="dow" id="dow">FRI</div><div class="day" id="day">02</div><div class="my" id="my">OCT 2026</div></div>
  </div>
  <div class="pill"><div class="big" contenteditable>DMTM</div><div class="sub" contenteditable>Distribution Management &amp; Training Management</div></div>
@@ -150,6 +153,7 @@ function setDate(v){
 }
 dIn.value='2026-10-02';dIn.onchange=()=>setDate(dIn.value);
 
+document.getElementById('boss').onclick=()=>{target=document.getElementById('boss');document.getElementById('file').click()};
 const readURL=f=>new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result);r.onerror=rej;r.readAsDataURL(f)});
 const poster=document.getElementById('poster'),bg=document.getElementById('bg'),bgov=document.getElementById('bgov');
 document.getElementById('bgBtn').onclick=()=>document.getElementById('bgFile').click();

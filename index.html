@@ -16,7 +16,7 @@ body{margin:0;background:#e9e9ee;font-family:'Noto Sans Thai',sans-serif;color:v
 .bar button.alt{background:#fff;color:var(--red);border:1.5px solid var(--red)}
 .bar input[type=date]{font:inherit;padding:6px 8px;border:1px solid #ccc;border-radius:8px}
 .hint{font-size:12px;color:var(--muted);text-align:center;max-width:760px}
-.poster{width:100%;max-width:760px;background:linear-gradient(135deg,#fff 0%,#f6f6f8 60%,#fff 100%);border-radius:18px;padding:28px 26px 22px;position:relative;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,.12)}
+.poster{width:760px;transform-origin:top left;background:linear-gradient(135deg,#fff 0%,#f6f6f8 60%,#fff 100%);border-radius:18px;padding:28px 26px 22px;position:relative;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,.12)}
 .poster:before{content:"";position:absolute;right:-90px;top:-60px;width:320px;height:320px;background:var(--red);opacity:.08;transform:rotate(25deg);border-radius:40px}
 .head{display:flex;gap:18px;justify-content:space-between;align-items:flex-start;position:relative;flex-wrap:wrap}
 .brand{font-weight:800;color:var(--red);font-size:20px}
@@ -52,11 +52,6 @@ body{margin:0;background:#e9e9ee;font-family:'Noto Sans Thai',sans-serif;color:v
 .foot .acad{font-style:italic;color:var(--red);font-weight:800;text-align:right}
 body.exporting select,body.exporting .del,body.exporting .hint,body.exporting .bar{display:none}
 body.exporting [contenteditable]:hover{background:none}
-@media (max-width:620px){
- .title .t1{font-size:40px}.title .t2{font-size:32px}.cal{width:120px}.cal .day{font-size:52px}
- .row{grid-template-columns:1fr}.photo{width:100%;height:180px}
- .mid{grid-template-columns:1fr;border:0;padding:0}.cat{text-align:left;display:flex;gap:8px;align-items:center}
-}
 @media print{body{background:#fff;padding:0}.bar,.hint,.del{display:none}.poster{box-shadow:none}}
 #ov{position:fixed;inset:0;background:rgba(0,0,0,.8);display:none;flex-direction:column;align-items:center;gap:10px;padding:16px;overflow:auto;z-index:9}#ov img{max-width:100%;border-radius:8px}#ov p{color:#fff;margin:0;text-align:center}#ov button{background:#fff;border:0;border-radius:8px;padding:8px 18px;font:inherit;cursor:pointer}
 .poster .bg,.poster .ov2{position:absolute;inset:0;display:none;z-index:0}
@@ -87,9 +82,9 @@ body.exporting .photo.boss:not(.has){visibility:hidden}
  <button class="alt" id="resetBtn">↺ ล้างค่าที่จำไว้</button>
  <span id="msg" style="font-size:13px;color:#667"></span>
 </div>
-<div class="hint">ระบบจำรูป พื้นหลัง และข้อมูลทุกอย่างไว้ในเครื่องนี้อัตโนมัติ วันถัดไปแก้เฉพาะวันที่/หัวข้อ · คลิกที่ข้อความใดก็ได้เพื่อแก้ไข · คลิกที่กรอบรูปเพื่ออัพโหลดภาพ · เมื่อเสร็จแล้วกดปุ่มดาวน์โหลดรูป (รูปที่ได้จะเป็นขนาดเดียวกันทุกอุปกรณ์)</div>
+<div class="hint">ระบบจำข้อมูลในเครื่องนี้ให้อัตโนมัติ · แตะข้อความหรือกรอบรูปเพื่อแก้ไข · บนมือถือแสดงแบบย่อส่วน ใช้สองนิ้วขยายได้ · รูปที่ดาวน์โหลดเหมือนกันทุกอุปกรณ์</div>
 
-<div class="poster" id="poster">
+<div id="stage" style="position:relative"><div class="poster" id="poster">
  <div class="bg" id="bg"></div><div class="ov2" id="bgov"></div>
  <div class="head">
   <div>
@@ -106,7 +101,7 @@ body.exporting .photo.boss:not(.has){visibility:hidden}
   <div class="tag"><span contenteditable>TOGETHER WE MAKE A</span><br><b contenteditable>DIFFERENCE</b></div>
   <div class="acad"><span contenteditable>PRU Academy</span><br><small contenteditable>FOR A BRIGHTER TOMORROW</small></div>
  </div>
-</div>
+</div></div>
 
 <div id="ov"><p>กดค้างที่รูปเพื่อบันทึก</p><img id="ovImg" alt=""><button onclick="document.getElementById('ov').style.display='none'">ปิด</button></div>
 <input type="file" id="file" accept="image/*" hidden>
@@ -255,7 +250,7 @@ dl.onclick=async()=>{
  document.body.classList.add('exporting');
  try{
   if(document.fonts&&document.fonts.ready)await document.fonts.ready;
-  const cv=await html2canvas(poster,{scale:2,backgroundColor:'#ffffff',useCORS:true,windowWidth:1000,onclone:d=>{const q=d.getElementById('poster');q.style.width='760px';q.style.maxWidth='760px'}});
+  const cv=await html2canvas(poster,{scale:2,backgroundColor:'#ffffff',useCORS:true,windowWidth:1000,onclone:d=>{const q=d.getElementById('poster');q.style.transform='none';q.style.width='760px';const st=d.getElementById('stage');st.style.width='760px';st.style.height='auto'}});
   const blob=await new Promise(r=>cv.toBlob(r,'image/png'));
   msg.textContent=await saveFile(blob,'team-schedule-'+dIn.value+'.png');
  }catch(e){msg.textContent='สร้างรูปไม่สำเร็จ ลองแคปหน้าจอแทน'}
@@ -264,6 +259,19 @@ dl.onclick=async()=>{
 /* ---------- เริ่มต้น ---------- */
 init.forEach(addRow);
 try{const sv=localStorage.getItem(KEY);if(sv&&loadState(JSON.parse(sv)))msg.textContent='โหลดค่าที่จำไว้แล้ว'}catch(e){}
+
+/* ---------- ย่อส่วนให้พอดีจอ (หน้าตาเหมือนกันทุกอุปกรณ์) ---------- */
+const stage=$('stage');
+function fit(){
+ const avail=Math.min(760,document.documentElement.clientWidth-28);
+ const k=Math.max(0.3,avail/760);
+ poster.style.transform=k<1?'scale('+k+')':'none';
+ stage.style.width=Math.round(760*k)+'px';
+ stage.style.height=Math.round(poster.offsetHeight*k)+'px';
+}
+window.addEventListener('resize',fit);
+if(window.ResizeObserver)new ResizeObserver(fit).observe(poster);
+fit();
 </script>
 </body>
 </html>

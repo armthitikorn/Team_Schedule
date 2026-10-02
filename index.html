@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Team Schedule</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;600;800&family=Montserrat:wght@600;800;900&display=swap" rel="stylesheet">
+<style>
+:root{--red:#d71920;--navy:#1b2a5c;--ink:#2b2f3a;--bg:#f4f4f6;--card:#fff;--soft:#fde3e4;--muted:#667;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#15161a}}
+*{box-sizing:border-box}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:#e9e9ee;font-family:'Noto Sans Thai',sans-serif;color:var(--ink);display:flex;flex-direction:column;align-items:center;gap:14px;padding:14px}
+.bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:center;background:#fff;padding:10px 14px;border-radius:12px;max-width:760px;width:100%;font-size:14px}
+.bar button,.bar label.btn{background:var(--red);color:#fff;border:0;border-radius:8px;padding:8px 14px;font:inherit;font-weight:600;cursor:pointer}
+.bar button.alt{background:#fff;color:var(--red);border:1.5px solid var(--red)}
+.bar input[type=date]{font:inherit;padding:6px 8px;border:1px solid #ccc;border-radius:8px}
+.hint{font-size:12px;color:var(--muted);text-align:center;max-width:760px}
+.poster{width:100%;max-width:760px;background:linear-gradient(135deg,#fff 0%,#f6f6f8 60%,#fff 100%);border-radius:18px;padding:28px 26px 22px;position:relative;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,.12)}
+.poster:before{content:"";position:absolute;right:-90px;top:-60px;width:320px;height:320px;background:var(--red);opacity:.08;transform:rotate(25deg);border-radius:40px}
+.head{display:flex;gap:18px;justify-content:space-between;align-items:flex-start;position:relative;flex-wrap:wrap}
+.brand{font-weight:800;color:var(--red);font-size:20px}
+.title{font-family:'Montserrat',sans-serif;font-weight:900;line-height:.95;margin:6px 0 4px}
+.title .t1{font-size:56px;color:var(--ink);display:block}
+.title .t2{font-size:44px;color:var(--red);display:block}
+.team{font-size:18px;color:var(--ink)}
+.cal{width:150px;background:#fff;border-radius:14px;box-shadow:0 4px 14px rgba(0,0,0,.18);text-align:center;overflow:hidden;flex:none}
+.cal .dow{background:var(--red);color:#fff;font-family:'Montserrat';font-weight:800;font-size:22px;padding:6px}
+.cal .day{font-family:'Montserrat';font-weight:900;font-size:68px;color:var(--red);line-height:1.05}
+.cal .my{font-family:'Montserrat';font-weight:800;font-size:17px;padding-bottom:10px}
+.pill{margin:16px 0 14px;background:linear-gradient(90deg,var(--red),#a30f15);color:#fff;border-radius:40px;padding:8px 20px;text-align:center;position:relative}
+.pill .big{font-family:'Montserrat';font-weight:800;font-size:24px;letter-spacing:.35em}
+.pill .sub{font-size:13px}
+.rows{display:flex;flex-direction:column;gap:12px;position:relative}
+.row{display:grid;grid-template-columns:120px 1fr 110px;gap:14px;align-items:center;background:var(--card);border-radius:16px;padding:10px;box-shadow:0 2px 10px rgba(0,0,0,.08);position:relative}
+.photo{width:120px;height:120px;border-radius:12px;background:#eee center/cover no-repeat;display:flex;align-items:center;justify-content:center;color:#999;font-size:12px;cursor:pointer;text-align:center;border:2px dashed #ccc;overflow:hidden}
+.photo.has{border:0}
+.mid{display:grid;grid-template-columns:130px 1fr;gap:12px;align-items:center;border-left:2px solid #ddd;border-right:2px solid #ddd;padding:0 12px;min-height:100px}
+.who{color:var(--navy);font-weight:800;font-size:17px;line-height:1.25}
+.who small{display:block;font-weight:600;font-size:14px}
+.task .time{display:inline-block;background:var(--soft);color:var(--red);font-weight:600;border-radius:6px;padding:2px 12px;margin-bottom:4px}
+.task .topic{color:var(--navy);font-weight:800;font-size:17px;line-height:1.3}
+.cat{text-align:center;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.cat .ic{font-size:34px;color:var(--red);line-height:1.2}
+[contenteditable]{outline:none;border-radius:4px}
+[contenteditable]:hover{background:rgba(215,25,32,.06)}
+[contenteditable]:focus{background:rgba(215,25,32,.1);box-shadow:0 0 0 2px rgba(215,25,32,.35)}
+.del{position:absolute;top:-8px;right:-8px;width:26px;height:26px;border-radius:50%;border:0;background:#333;color:#fff;cursor:pointer;font-size:14px}
+.foot{margin-top:16px;display:flex;justify-content:space-between;align-items:flex-end;position:relative;gap:12px}
+.foot .tag{font-weight:800;font-size:22px;color:var(--ink);line-height:1.15}
+.foot .tag b{color:var(--red);font-size:26px}
+.foot .acad{font-style:italic;color:var(--red);font-weight:800;text-align:right}
+body.exporting select,body.exporting .del,body.exporting .hint,body.exporting .bar{display:none}
+body.exporting [contenteditable]:hover{background:none}
+@media (max-width:620px){
+ .title .t1{font-size:40px}.title .t2{font-size:32px}.cal{width:120px}.cal .day{font-size:52px}
+ .row{grid-template-columns:1fr}.photo{width:100%;height:180px}
+ .mid{grid-template-columns:1fr;border:0;padding:0}.cat{text-align:left;display:flex;gap:8px;align-items:center}
+}
+@media print{body{background:#fff;padding:0}.bar,.hint,.del{display:none}.poster{box-shadow:none}}
+#ov{position:fixed;inset:0;background:rgba(0,0,0,.8);display:none;flex-direction:column;align-items:center;gap:10px;padding:16px;overflow:auto;z-index:9}#ov img{max-width:100%;border-radius:8px}#ov p{color:#fff;margin:0;text-align:center}#ov button{background:#fff;border:0;border-radius:8px;padding:8px 18px;font:inherit;cursor:pointer}
+.poster .bg,.poster .ov2{position:absolute;inset:0;display:none;z-index:0}
+.poster .bg{background:center/cover no-repeat}
+.poster .ov2{background:#fff;opacity:.75}
+.poster.has-bg .bg,.poster.has-bg .ov2{display:block}
+.poster.has-bg:before{display:none}
+.bar .sep{width:100%;height:0}
+.bar label.rng{display:flex;gap:6px;align-items:center;font-size:13px}
+</style>
+</head>
+<body>
+<div class="bar">
+ <label>วันที่: <input type="date" id="dateIn"></label>
+ <button id="addBtn">+ เพิ่มแถว</button>
+ <button id="dlBtn">⬇ ดาวน์โหลดรูป (PNG)</button>
+ <button class="alt" onclick="document.body.classList.add('exporting');setTimeout(()=>{window.print();document.body.classList.remove('exporting')},50)">พิมพ์ / PDF</button>
+ <span class="sep"></span>
+ <button class="alt" id="multiBtn">👤 อัพโหลดรูปวิทยากร (หลายรูป)</button>
+ <button class="alt" id="bgBtn">🖼 ภาพพื้นหลัง</button>
+ <button class="alt" id="bgClr" style="display:none">ลบพื้นหลัง</button>
+ <label class="rng" id="bgCtl" style="display:none">ความเข้มฟิล์มขาว <input type="range" id="bgOp" min="0" max="95" value="75"></label>
+ <span id="msg" style="font-size:13px;color:#667"></span>
+</div>
+<div class="hint">คลิกที่ข้อความใดก็ได้เพื่อแก้ไข · คลิกที่กรอบรูปเพื่ออัพโหลดภาพ · ถ้าจะเก็บเป็นรูป ให้แคปหน้าจอส่วนใบตาราง</div>
+
+<div class="poster" id="poster">
+ <div class="bg" id="bg"></div><div class="ov2" id="bgov"></div>
+ <div class="head">
+  <div>
+   <div class="brand" contenteditable>PRUDENTIAL พรูเด็นเชียล</div>
+   <div class="title"><span class="t1" contenteditable>TEAM</span><span class="t2" contenteditable>SCHEDULE</span></div>
+   <div class="team" contenteditable>Distribution Academy Team</div>
+  </div>
+  <div class="cal"><div class="dow" id="dow">FRI</div><div class="day" id="day">02</div><div class="my" id="my">OCT 2026</div></div>
+ </div>
+ <div class="pill"><div class="big" contenteditable>DMTM</div><div class="sub" contenteditable>Distribution Management &amp; Training Management</div></div>
+ <div class="rows" id="rows"></div>
+ <div class="foot">
+  <div class="tag"><span contenteditable>TOGETHER WE MAKE A</span><br><b contenteditable>DIFFERENCE</b></div>
+  <div class="acad" contenteditable>PRU Academy<br><small>FOR A BRIGHTER TOMORROW</small></div>
+ </div>
+</div>
+
+<div id="ov"><p>กดค้างที่รูปเพื่อบันทึก</p><img id="ovImg" alt=""><button onclick="document.getElementById('ov').style.display='none'">ปิด</button></div>
+<input type="file" id="file" accept="image/*" hidden>
+<input type="file" id="bgFile" accept="image/*" hidden>
+<input type="file" id="multiFile" accept="image/*" multiple hidden>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script>
+const CATS={train:['📊','Training & Presentation'],content:['📝','Content Development'],program:['⚙️','Program Development'],meet:['👥','Meeting'],other:['⭐','Other']};
+const init=[
+ {name:'Ratthanin (Meth)',handle:'@Siripinyo',time:'09.00 - 17.00',topic:'ความรู้และทักษะการนำเสนอขายแบบประกัน PRU Healthy Plus',cat:'train'},
+ {name:'Nawarat (Kae)',handle:'',time:'',topic:'Prepare content Retention Course - DMTM',cat:'content'},
+ {name:'Thitikorn.k (Arm)',handle:'',time:'',topic:'Update And Refresh Program for New TSRs Onboarding',cat:'program'},
+ {name:'Thaweep (Ao)',handle:'@SYM',time:'09.00 - 17.00',topic:'ความรู้และทักษะการนำเสนอขายแบบประกัน PRU Healthy Plus',cat:'train'}
+];
+const rows=document.getElementById('rows');let target=null;
+function addRow(d){
+ d=d||{name:'ชื่อ (ชื่อเล่น)',handle:'@ทีม',time:'09.00 - 17.00',topic:'หัวข้องาน',cat:'train'};
+ const r=document.createElement('div');r.className='row';
+ const opts=Object.entries(CATS).map(([k,v])=>`<option value="${k}"${k===d.cat?' selected':''}>${v[1]}</option>`).join('');
+ r.innerHTML=`<div class="photo">คลิกเพื่ออัพโหลดรูป</div>
+ <div class="mid"><div class="who"><span contenteditable>${d.name}</span><small contenteditable>${d.handle}</small></div>
+ <div class="task"><span class="time" contenteditable>${d.time}</span><div class="topic" contenteditable>${d.topic}</div></div></div>
+ <div class="cat"><div class="ic"></div><div class="cl"></div><select style="margin-top:6px;font-size:11px;max-width:100%">${opts}</select></div>
+ <button class="del" title="ลบแถว">×</button>`;
+ const sel=r.querySelector('select');
+ const upd=()=>{r.querySelector('.ic').textContent=CATS[sel.value][0];r.querySelector('.cl').textContent=CATS[sel.value][1]};
+ sel.onchange=upd;upd();
+ const timeEl=r.querySelector('.time');
+ timeEl.addEventListener('blur',()=>{timeEl.style.display=timeEl.textContent.trim()?'inline-block':'none'});
+ if(!d.time)timeEl.style.display='none';
+ r.querySelector('.photo').onclick=()=>{target=r.querySelector('.photo');document.getElementById('file').click()};
+ r.querySelector('.del').onclick=()=>r.remove();
+ rows.appendChild(r);
+}
+document.getElementById('file').onchange=e=>{
+ const f=e.target.files[0];if(!f||!target)return;
+ const rd=new FileReader();rd.onload=()=>{target.style.backgroundImage=`url(${rd.result})`;target.textContent='';target.classList.add('has')};
+ rd.readAsDataURL(f);e.target.value='';
+};
+document.getElementById('addBtn').onclick=()=>addRow();
+init.forEach(addRow);
+const dIn=document.getElementById('dateIn');
+function setDate(v){
+ const d=new Date(v+'T00:00:00');if(isNaN(d))return;
+ document.getElementById('dow').textContent=d.toLocaleDateString('en-US',{weekday:'short'}).toUpperCase();
+ document.getElementById('day').textContent=String(d.getDate()).padStart(2,'0');
+ document.getElementById('my').textContent=d.toLocaleDateString('en-US',{month:'short'}).toUpperCase()+' '+d.getFullYear();
+}
+dIn.value='2026-10-02';dIn.onchange=()=>setDate(dIn.value);
+
+const readURL=f=>new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result);r.onerror=rej;r.readAsDataURL(f)});
+const poster=document.getElementById('poster'),bg=document.getElementById('bg'),bgov=document.getElementById('bgov');
+document.getElementById('bgBtn').onclick=()=>document.getElementById('bgFile').click();
+document.getElementById('bgFile').onchange=async e=>{
+ const f=e.target.files[0];if(!f)return;
+ bg.style.backgroundImage='url('+await readURL(f)+')';
+ poster.classList.add('has-bg');
+ document.getElementById('bgClr').style.display='';document.getElementById('bgCtl').style.display='flex';
+ e.target.value='';
+};
+document.getElementById('bgClr').onclick=()=>{
+ bg.style.backgroundImage='';poster.classList.remove('has-bg');
+ document.getElementById('bgClr').style.display='none';document.getElementById('bgCtl').style.display='none';
+};
+document.getElementById('bgOp').oninput=e=>{bgov.style.opacity=e.target.value/100};
+document.getElementById('multiBtn').onclick=()=>document.getElementById('multiFile').click();
+document.getElementById('multiFile').onchange=async e=>{
+ const files=[...e.target.files];if(!files.length)return;
+ const m=document.getElementById('msg');
+ let slots=[...document.querySelectorAll('.photo:not(.has)')];
+ if(!slots.length)slots=[...document.querySelectorAll('.photo')];
+ const n=Math.min(files.length,slots.length);
+ for(let i=0;i<n;i++){const u=await readURL(files[i]);slots[i].style.backgroundImage='url('+u+')';slots[i].textContent='';slots[i].classList.add('has')}
+ m.textContent='ใส่รูป '+n+' รูปตามลำดับแถว'+(files.length>n?' (เหลือ '+(files.length-n)+' รูปที่ไม่มีแถวรองรับ)':'');
+ e.target.value='';
+};
+const dl=document.getElementById('dlBtn'),msg=document.getElementById('msg');
+dl.onclick=async()=>{
+ msg.textContent='กำลังสร้างรูป...';dl.disabled=true;
+ document.body.classList.add('exporting');
+ try{
+  if(document.fonts&&document.fonts.ready)await document.fonts.ready;
+  const cv=await html2canvas(document.getElementById('poster'),{scale:2,backgroundColor:'#ffffff',useCORS:true});
+  const blob=await new Promise(r=>cv.toBlob(r,'image/png'));
+  const name='team-schedule-'+dIn.value+'.png';
+  let dls=null;try{dls=await claude.use('downloads')}catch(e){}
+  if(dls){
+   try{await dls.save({filename:name,data:blob});msg.textContent='บันทึกแล้ว';}
+   catch(e){msg.textContent=e&&e.code==='declined'?'ยกเลิกการบันทึก':'บันทึกไม่สำเร็จ';}
+  }else{
+   const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;
+   document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),4000);
+   msg.textContent='ดาวน์โหลดแล้ว';
+  }
+ }catch(e){msg.textContent='สร้างรูปไม่สำเร็จ ลองแคปหน้าจอแทน';}
+ document.body.classList.remove('exporting');dl.disabled=false;
+};
+</script>
+</body>
+</html>
